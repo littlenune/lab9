@@ -35,6 +35,7 @@ public class ConverterUI extends JFrame{
 	private JPanel secondPane;
 	private JRadioButton leftToRight;
 	private JRadioButton rightToLeft;
+	private JRadioButton autoDetect;
 	/*
 	 * Constructor receives references to UnitConverter also set JFrame.
 	 * @param UnitConverter 
@@ -81,17 +82,16 @@ public class ConverterUI extends JFrame{
 		leftToRight = new JRadioButton("Left->Right");
 		rightToLeft = new JRadioButton("Right->Left");
 		leftToRight.setSelected(true);
+		autoDetect = new JRadioButton("auto-detect");
 		secondPane.setLayout(new FlowLayout());
 		secondPane.add(leftToRight);
 		secondPane.add(rightToLeft);
-		ActionListener listener = new ConvertButtonListener();
-		convertButton.addActionListener(listener);
-		ActionListener listener2 = new ClearButtonListener();
-		clearButton.addActionListener(listener2);
-		ActionListener listener3 = new ConvertionMode();
-		rightToLeft.addActionListener(listener3);
-		ActionListener listener4 = new ConvertionMode2();
-		leftToRight.addActionListener(listener4);
+		secondPane.add(autoDetect);
+		convertButton.addActionListener(new ConvertButtonListener());
+		clearButton.addActionListener(new ClearButtonListener());
+		rightToLeft.addActionListener(new Conversion());
+		leftToRight.addActionListener(new Conversion());
+		autoDetect.addActionListener(new Conversion());
 		this.pack();
 	}
 	/*
@@ -102,7 +102,6 @@ public class ConverterUI extends JFrame{
 		ConverterUI frame = new ConverterUI(uc);
 		frame.setVisible(true);
 	}
-
 	/*
 	 * ActionListener related to the button when pressed or clicked will perform an action which is unitConverter to convert and result 
 	 * values in another textField.
@@ -112,7 +111,7 @@ public class ConverterUI extends JFrame{
 	class ConvertButtonListener implements ActionListener , KeyListener{
 		/*
 		 * Convert value from selected to another selected unit by using unitConverter also detected the direction 
-		 * to convert and result the values. 
+		 * to convert and result the value. 
 		 */
 		public void conversion (){
 			String s = inputField1.getText().trim();
@@ -121,11 +120,11 @@ public class ConverterUI extends JFrame{
 				try {
 					Unit unit1 = (Unit) unit1ComboBox.getSelectedItem();
 					Unit unit2 = (Unit) unit2ComboBox.getSelectedItem();
-					if ( rightToLeft.isSelected() == false){
+					if ( inputField2.isEditable() == false || inputField1.hasFocus()  ){
 						double value = Double.valueOf(s);
 						inputField2.setText(String.format("%.3f",unitconverter.convert(value,unit1,unit2)));
 					}
-					else {
+					else if ( inputField1.isEditable() == false || inputField2.hasFocus() ) {
 						double value = Double.valueOf(s2);
 						inputField1.setText(String.format("%.3f",unitconverter.convert(value,unit2,unit1)));
 					}
@@ -146,9 +145,11 @@ public class ConverterUI extends JFrame{
 		 */
 		@Override
 		public void keyTyped(KeyEvent e) {
-			if ( inputField1.getText().equals("") || inputField1.getText().equals("") ){
-				inputField1.setText("");
+			if ( inputField1.hasFocus() && inputField1.getText().equals("")){
 				inputField2.setText("");
+			}
+			else if ( inputField2.hasFocus() && inputField2.getText().equals("")){
+				inputField1.setText("");
 			}
 		}
 		/*
@@ -165,7 +166,9 @@ public class ConverterUI extends JFrame{
 		 */
 		@Override
 		public void keyReleased(KeyEvent e) {
-			this.conversion();
+			if ( autoDetect.isSelected() == true){
+				this.conversion();
+			}
 		}
 	}
 	/*
@@ -180,21 +183,44 @@ public class ConverterUI extends JFrame{
 	/*
 	 * Set direction to convert from right text field to left text field. 
 	 */
-	class ConvertionMode implements ActionListener {
+	class Conversion implements ActionListener {
 		public void actionPerformed( ActionEvent evt){
+			if ( rightToLeft.hasFocus() == true){
+				this.inputRightTextField();
+			}
+			else if ( leftToRight.hasFocus() == true){
+				this.inputLeftTextField();
+			}
+			else if ( autoDetect.hasFocus() == true){
+				this.autoDectectMode();
+			}
+		}
+		/*
+		 * Input with right text field and set left text field to be not editable also perform result in the left text field
+		 */
+		public void inputRightTextField (){
 			inputField1.setEditable(false);
 			inputField2.setEditable(true);
 			leftToRight.setSelected(false);
+			autoDetect.setSelected(false);
 		}
-	}
-	/*
-	 * Set direction to convert from left text field to right text field. 
-	 */
-	class ConvertionMode2 implements ActionListener {
-		public void actionPerformed( ActionEvent evt){
+		/*
+		 * Input with left text field and set right text field to be not editable also perform result in the right text field
+		 */
+		public void inputLeftTextField (){
 			inputField1.setEditable(true);
 			inputField2.setEditable(false);
 			rightToLeft.setSelected(false);
+			autoDetect.setSelected(false);
+		}
+		/*
+		 * Can input in any text fields and the result will perform in one another.
+		 */
+		public void autoDectectMode (){
+			inputField1.setEditable(true);
+			inputField2.setEditable(true);
+			rightToLeft.setSelected(false);
+			leftToRight.setSelected(false);
 		}
 	}
 }
